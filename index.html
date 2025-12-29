@@ -57,32 +57,20 @@
         const result = await response.json();
         let aiResponse = "";
 
-        // ૧. જો જવાબ એરે (Array) માં હોય - [ { generated_text: "..." } ]
-        if (Array.isArray(result) && result.length > 0) {
-            aiResponse = result[0].generated_text || result[0].text || JSON.stringify(result[0]);
-        } 
-        // ૨. જો જવાબ ડાયરેક્ટ ઓબ્જેક્ટમાં હોય
-        else if (result.generated_text) {
-            aiResponse = result.generated_text;
-        }
-        // ૩. જો જવાબ OpenAI સ્ટાઇલ (Choices) માં હોય
-        else if (result.choices && result.choices[0].message) {
+        // નવા Router ફોર્મેટ મુજબ જવાબ વાંચવો
+        if (result.choices && result.choices[0] && result.choices[0].message) {
             aiResponse = result.choices[0].message.content;
+        } 
+        // જો કોઈ જૂનું ફોર્મેટ હોય
+        else if (Array.isArray(result)) {
+            aiResponse = result[0].generated_text;
         }
-        // ૪. છેલ્લો ઉપાય: જો કંઈ ના મળે તો આખું રિઝલ્ટ બતાવો
         else {
-            aiResponse = result.error || JSON.stringify(result);
-        }
-
-        // જો AI જવાબમાં તમારો પ્રશ્ન ફરીથી લખે, તો તેને કાઢી નાખવો
-        if (typeof aiResponse === 'string' && aiResponse.includes(message)) {
-            aiResponse = aiResponse.split(message).pop().trim();
+            aiResponse = "Error: " + JSON.stringify(result);
         }
 
         chatbox.innerHTML += `<div class="mb-4 text-blue-400"><b>AI:</b> ${aiResponse}</div>`;
-        
-    } catch (err) {
-        chatbox.innerHTML += `<div class="mb-4 text-red-400"><b>System:</b> Connection failed. Please try again.</div>`;
+
     } finally {
         sendBtn.disabled = false;
         chatbox.scrollTop = chatbox.scrollHeight;
@@ -91,6 +79,7 @@
     </script>
 </body>
 </html>
+
 
 
 
