@@ -57,18 +57,24 @@
         });
 
         const result = await response.json();
-        
-        // Hugging Face નો જવાબ વાંચવાની રીત
         let aiResponse = "";
-        if (Array.isArray(result) && result[0].generated_text) {
+
+        // નવા 'Chat' ફોર્મેટ મુજબ જવાબ વાંચવો
+        if (result.choices && result.choices[0] && result.choices[0].message) {
+            aiResponse = result.choices[0].message.content;
+        } 
+        // જો જૂનું ફોર્મેટ હોય
+        else if (Array.isArray(result) && result[0].generated_text) {
             aiResponse = result[0].generated_text;
-        } else {
-            aiResponse = "AI is thinking... please try again in a moment.";
+        }
+        else if (result.error) {
+            aiResponse = "System: " + (result.error.message || JSON.stringify(result.error));
+        }
+        else {
+            aiResponse = "I received a response, but it's in an unknown format. Try again!";
         }
 
         chatbox.innerHTML += `<div class="mb-4 text-blue-400"><b>AI:</b> ${aiResponse}</div>`;
-    } catch (err) {
-        chatbox.innerHTML += `<div class="mb-4 text-red-400"><b>System:</b> Backend Error. Check Vercel Environment Variables.</div>`;
     } finally {
         sendBtn.disabled = false;
         chatbox.scrollTop = chatbox.scrollHeight;
@@ -77,4 +83,5 @@
     </script>
 </body>
 </html>
+
 
