@@ -9,15 +9,18 @@
     <style>
         body { background-color: #0f172a; color: white; font-family: 'Inter', sans-serif; }
         .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .chat-container { height: calc(100vh - 200px); overflow-y: auto; }
+        .chat-container { height: calc(100vh - 300px); overflow-y: auto; scroll-behavior: smooth; }
     </style>
 </head>
 <body class="p-4 md:p-8">
     <div class="max-w-4xl mx-auto">
         <!-- Header -->
         <header class="text-center mb-8">
-            <h1 class="text-5xl font-extrabold text-blue-500 mb-2">🚀 FounderGPT</h1>
-            <p class="text-slate-400">Advanced Business Strategy AI for Global Startups</p>
+            <div class="flex justify-center mb-4">
+                <i class="fa-solid fa-rocket text-5xl text-blue-500"></i>
+            </div>
+            <h1 class="text-5xl font-extrabold text-blue-500 mb-2">FounderGPT</h1>
+            <p class="text-slate-400 text-lg">Advanced Business Strategy AI for Global Startups</p>
         </header>
 
         <!-- Chat Area -->
@@ -29,62 +32,65 @@
         <div class="flex gap-2">
             <input type="text" id="userInput" placeholder="Type your business question here..." 
                    class="flex-1 glass rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white">
-            <button onclick="sendMessage()" class="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-xl font-bold transition">
+            <button onclick="sendMessage()" id="sendBtn" class="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-xl font-bold transition">
                 <i class="fa-solid fa-paper-plane"></i>
             </button>
         </div>
+        <p class="text-center text-slate-500 mt-4 text-sm">© 2026 FounderGPT | Empowering Startups Worldwide</p>
     </div>
 
     <script>
-async function sendMessage() {
-    const input = document.getElementById('userInput');
-    const chatbox = document.getElementById('chatbox');
-    const message = input.value.trim();
-    if (!message) return;
-
-    chatbox.innerHTML += `<div class="mb-4 text-slate-200 text-right"><b>You:</b> ${message}</div>`;
-    input.value = '';
-
-    try {
-        const response = await fetch("/api/generate", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ message: message }),
+        // Enter Key સપોર્ટ માટે
+        document.getElementById("userInput").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                sendMessage();
+            }
         });
 
-        // જો સર્વર કોઈ ભૂલ આપે (404 કે 500)
-        if (!response.ok) {
-            const errorData = await response.json();
-            chatbox.innerHTML += `<div class="mb-4 text-red-400"><b>System Error:</b> Status ${response.status} - ${JSON.stringify(errorData)}</div>`;
-            return;
-        }
+        async function sendMessage() {
+            const input = document.getElementById('userInput');
+            const chatbox = document.getElementById('chatbox');
+            const sendBtn = document.getElementById('sendBtn');
+            const message = input.value.trim();
+            
+            if (!message) return;
 
-       const result = await response.json();
-        
-        let aiResponse = "No response.";
-        
-        // જો જવાબ 'Chat' ફોર્મેટમાં હોય (નવી રીત)
-        if (result.choices && result.choices[0]) {
-            aiResponse = result.choices[0].message.content;
-        } 
-        // જો જવાબ 'List' ફોર્મેટમાં હોય (જૂની રીત)
-        else if (Array.isArray(result) && result[0].generated_text) {
-            aiResponse = result[0].generated_text;
-        }
-        // જો કોઈ એરર હોય
-        else if (result.error) {
-            aiResponse = "Error: " + JSON.stringify(result.error);
-        }
+            // બટન ડિસેબલ કરવું જેથી વારંવાર ક્લિક ના થાય
+            sendBtn.disabled = true;
+            chatbox.innerHTML += `<div class="mb-4 text-slate-200 text-right"><b>You:</b> ${message}</div>`;
+            input.value = '';
+            chatbox.scrollTop = chatbox.scrollHeight;
 
-        chatbox.innerHTML += `<div class="mb-4 text-blue-400"><b>AI:</b> ${aiResponse}</div>`;
+            try {
+                const response = await fetch("/api/generate", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ message: message }),
+                });
+
+                const result = await response.json();
+                console.log("Response received:", result);
+
+                let aiResponse = "Sorry, I couldn't generate a response. Please try again.";
+
+                // જવાબ વાંચવાની અલગ અલગ રીતો (Error handling)
+                if (result.choices && result.choices[0] && result.choices[0].message) {
+                    aiResponse = result.choices[0].message.content;
+                } else if (Array.isArray(result) && result[0].generated_text) {
+                    aiResponse = result[0].generated_text;
+                } else if (result.error) {
+                    aiResponse = "Error from AI: " + (result.error.message || JSON.stringify(result.error));
+                }
+
+                chatbox.innerHTML += `<div class="mb-4 text-blue-400"><b>AI:</b> ${aiResponse}</div>`;
+            } catch (err) {
+                console.error("Fetch error:", err);
+                chatbox.innerHTML += `<div class="mb-4 text-red-400"><b>System:</b> Connection failed. Please check your Vercel logs.</div>`;
+            } finally {
+                sendBtn.disabled = false;
+                chatbox.scrollTop = chatbox.scrollHeight;
+            }
+        }
     </script>
 </body>
-
 </html>
-
-
-
-
-
-
-
