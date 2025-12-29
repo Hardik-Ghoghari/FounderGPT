@@ -34,7 +34,7 @@
     </div>
 
     <script>
-      async function sendMessage() {
+ async function sendMessage() {
     const input = document.getElementById('userInput');
     const chatbox = document.getElementById('chatbox');
     const sendBtn = document.getElementById('sendBtn');
@@ -42,7 +42,6 @@
     
     if (!message) return;
 
-    // UI અપડેટ
     sendBtn.disabled = true;
     chatbox.innerHTML += `<div class="mb-4 text-slate-200 text-right"><b>You:</b> ${message}</div>`;
     input.value = '';
@@ -56,24 +55,28 @@
         });
 
         const result = await response.json();
-        console.log("Success Result:", result); // આ તમારા બ્રાઉઝરના કન્સોલમાં દેખાશે
-
         let aiResponse = "";
 
-        // હગિંગ ફેસના જવાબને પકડવાની રીત
-        if (Array.isArray(result) && result[0].generated_text) {
-            aiResponse = result[0].generated_text;
-        } else if (result.generated_text) {
+        // ૧. જો જવાબ એરે (Array) માં હોય - [ { generated_text: "..." } ]
+        if (Array.isArray(result) && result.length > 0) {
+            aiResponse = result[0].generated_text || result[0].text || JSON.stringify(result[0]);
+        } 
+        // ૨. જો જવાબ ડાયરેક્ટ ઓબ્જેક્ટમાં હોય
+        else if (result.generated_text) {
             aiResponse = result.generated_text;
-        } else if (result.choices && result.choices[0].message) {
+        }
+        // ૩. જો જવાબ OpenAI સ્ટાઇલ (Choices) માં હોય
+        else if (result.choices && result.choices[0].message) {
             aiResponse = result.choices[0].message.content;
-        } else {
-            aiResponse = "I received the data, but I'm having trouble displaying it. Try asking again!";
+        }
+        // ૪. છેલ્લો ઉપાય: જો કંઈ ના મળે તો આખું રિઝલ્ટ બતાવો
+        else {
+            aiResponse = result.error || JSON.stringify(result);
         }
 
-        // જો જવાબમાં તમારો સવાલ ફરીથી આવે, તો તેને કાઢી નાખવો
-        if (aiResponse.includes(message)) {
-            aiResponse = aiResponse.replace(message, "").replace("<s>[INST]", "").replace("[/INST]", "").trim();
+        // જો AI જવાબમાં તમારો પ્રશ્ન ફરીથી લખે, તો તેને કાઢી નાખવો
+        if (typeof aiResponse === 'string' && aiResponse.includes(message)) {
+            aiResponse = aiResponse.split(message).pop().trim();
         }
 
         chatbox.innerHTML += `<div class="mb-4 text-blue-400"><b>AI:</b> ${aiResponse}</div>`;
@@ -88,5 +91,6 @@
     </script>
 </body>
 </html>
+
 
 
