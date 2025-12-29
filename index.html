@@ -36,7 +36,7 @@
     </div>
 
     <script>
-   async function sendMessage() {
+  async function sendMessage() {
     const input = document.getElementById('userInput');
     const chatbox = document.getElementById('chatbox');
     const message = input.value.trim();
@@ -46,23 +46,30 @@
     input.value = '';
 
     try {
-        // હવે આપણે આપણી પોતાની API વાપરીશું
         const response = await fetch("/api/generate", {
             method: "POST",
+            headers: { "Content-Type": "application/json" }, // આ લાઈન બહુ મહત્વની છે
             body: JSON.stringify({ message: message }),
         });
 
         const result = await response.json();
-        const aiResponse = result[0].generated_text || "Error processing request.";
         
+        // જો સર્વર ભૂલ આપે
+        if (result.error) {
+            chatbox.innerHTML += `<div class="mb-4 text-red-400"><b>AI Error:</b> ${JSON.stringify(result.error)}</div>`;
+            return;
+        }
+
+        const aiResponse = result[0].generated_text || "No response.";
         chatbox.innerHTML += `<div class="mb-4 text-blue-400"><b>AI:</b> ${aiResponse}</div>`;
         chatbox.scrollTop = chatbox.scrollHeight;
     } catch (err) {
-        chatbox.innerHTML += `<div class="mb-4 text-red-400"><b>System:</b> Server Error. Check Vercel Logs.</div>`;
+        chatbox.innerHTML += `<div class="mb-4 text-red-400"><b>System:</b> Connection failed. Check Logs.</div>`;
     }
 }
     </script>
 </body>
 
 </html>
+
 
