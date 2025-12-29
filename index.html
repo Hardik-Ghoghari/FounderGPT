@@ -36,7 +36,7 @@
     </div>
 
     <script>
- async function sendMessage() {
+async function sendMessage() {
     const input = document.getElementById('userInput');
     const chatbox = document.getElementById('chatbox');
     const message = input.value.trim();
@@ -54,25 +54,20 @@
 
         const result = await response.json();
         
-        // જો કોઈ એરર આવે તો
-        if (result.error) {
-            chatbox.innerHTML += `<div class="mb-4 text-red-400"><b>Error:</b> ${result.error.message || JSON.stringify(result.error)}</div>`;
-            return;
-        }
-
-        // આ લાઈન ખાસ બદલજો
-        const aiResponse = result.choices[0].message.content;
+        // Hugging Face નો જવાબ આ રીતે આવે છે: [{ generated_text: "..." }]
+        const aiResponse = result[0].generated_text || "No response received.";
         
         chatbox.innerHTML += `<div class="mb-4 text-blue-400"><b>AI:</b> ${aiResponse}</div>`;
         chatbox.scrollTop = chatbox.scrollHeight;
     } catch (err) {
-        chatbox.innerHTML += `<div class="mb-4 text-red-400"><b>System:</b> Connection failed.</div>`;
+        chatbox.innerHTML += `<div class="mb-4 text-red-400"><b>System:</b> Connection failed. Check folder structure.</div>`;
     }
 }
     </script>
 </body>
 
 </html>
+
 
 
 
