@@ -36,7 +36,7 @@
     </div>
 
     <script>
-  async function sendMessage() {
+ async function sendMessage() {
     const input = document.getElementById('userInput');
     const chatbox = document.getElementById('chatbox');
     const message = input.value.trim();
@@ -48,28 +48,31 @@
     try {
         const response = await fetch("/api/generate", {
             method: "POST",
-            headers: { "Content-Type": "application/json" }, // આ લાઈન બહુ મહત્વની છે
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ message: message }),
         });
 
         const result = await response.json();
         
-        // જો સર્વર ભૂલ આપે
+        // જો કોઈ એરર આવે તો
         if (result.error) {
-            chatbox.innerHTML += `<div class="mb-4 text-red-400"><b>AI Error:</b> ${JSON.stringify(result.error)}</div>`;
+            chatbox.innerHTML += `<div class="mb-4 text-red-400"><b>Error:</b> ${result.error.message || JSON.stringify(result.error)}</div>`;
             return;
         }
 
-        const aiResponse = result[0].generated_text || "No response.";
+        // આ લાઈન ખાસ બદલજો
+        const aiResponse = result.choices[0].message.content;
+        
         chatbox.innerHTML += `<div class="mb-4 text-blue-400"><b>AI:</b> ${aiResponse}</div>`;
         chatbox.scrollTop = chatbox.scrollHeight;
     } catch (err) {
-        chatbox.innerHTML += `<div class="mb-4 text-red-400"><b>System:</b> Connection failed. Check Logs.</div>`;
+        chatbox.innerHTML += `<div class="mb-4 text-red-400"><b>System:</b> Connection failed.</div>`;
     }
 }
     </script>
 </body>
 
 </html>
+
 
 
