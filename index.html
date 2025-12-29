@@ -36,20 +36,17 @@
     <script>
         document.getElementById("userInput").addEventListener("keypress", (e) => { if(e.key === "Enter") sendMessage(); });
 
-       async function sendMessage() {
+      async function sendMessage() {
     const input = document.getElementById('userInput');
     const chatbox = document.getElementById('chatbox');
-    const sendBtn = document.getElementById('sendBtn');
     const message = input.value.trim();
     if (!message) return;
 
-    sendBtn.disabled = true;
     chatbox.innerHTML += `<div class="mb-4 text-slate-200 text-right"><b>You:</b> ${message}</div>`;
     input.value = '';
-    chatbox.scrollTop = chatbox.scrollHeight;
 
     try {
-        // આપણે હવે /api/generate નો ઉપયોગ કરીએ છીએ (No CORS error)
+        // અહીં ધ્યાન આપજો: /api/generate ની પાછળ .js લખવાની જરૂર નથી
         const response = await fetch("/api/generate", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -57,31 +54,23 @@
         });
 
         const result = await response.json();
+        
         let aiResponse = "";
-
-        // નવા 'Chat' ફોર્મેટ મુજબ જવાબ વાંચવો
-        if (result.choices && result.choices[0] && result.choices[0].message) {
+        if (result.choices && result.choices[0]) {
             aiResponse = result.choices[0].message.content;
-        } 
-        // જો જૂનું ફોર્મેટ હોય
-        else if (Array.isArray(result) && result[0].generated_text) {
-            aiResponse = result[0].generated_text;
-        }
-        else if (result.error) {
-            aiResponse = "System: " + (result.error.message || JSON.stringify(result.error));
-        }
-        else {
-            aiResponse = "I received a response, but it's in an unknown format. Try again!";
+        } else {
+            aiResponse = "AI is warming up, please try again in 10 seconds.";
         }
 
         chatbox.innerHTML += `<div class="mb-4 text-blue-400"><b>AI:</b> ${aiResponse}</div>`;
-    } finally {
-        sendBtn.disabled = false;
-        chatbox.scrollTop = chatbox.scrollHeight;
+    } catch (err) {
+        chatbox.innerHTML += `<div class="mb-4 text-red-400"><b>System:</b> Server Error. Please check Vercel logs.</div>`;
     }
+    chatbox.scrollTop = chatbox.scrollHeight;
 }
     </script>
 </body>
 </html>
+
 
 
