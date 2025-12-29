@@ -34,14 +34,19 @@
     </div>
 
     <script>
-        async function sendMessage() {
+      async function sendMessage() {
     const input = document.getElementById('userInput');
     const chatbox = document.getElementById('chatbox');
+    const sendBtn = document.getElementById('sendBtn');
     const message = input.value.trim();
+    
     if (!message) return;
 
+    // UI અપડેટ
+    sendBtn.disabled = true;
     chatbox.innerHTML += `<div class="mb-4 text-slate-200 text-right"><b>You:</b> ${message}</div>`;
     input.value = '';
+    chatbox.scrollTop = chatbox.scrollHeight;
 
     try {
         const response = await fetch("/api/generate", {
@@ -51,16 +56,37 @@
         });
 
         const result = await response.json();
-        
-        // Hugging Face નો જવાબ મેળવવો
-        const aiResponse = result[0].generated_text || "No response.";
+        console.log("Success Result:", result); // આ તમારા બ્રાઉઝરના કન્સોલમાં દેખાશે
+
+        let aiResponse = "";
+
+        // હગિંગ ફેસના જવાબને પકડવાની રીત
+        if (Array.isArray(result) && result[0].generated_text) {
+            aiResponse = result[0].generated_text;
+        } else if (result.generated_text) {
+            aiResponse = result.generated_text;
+        } else if (result.choices && result.choices[0].message) {
+            aiResponse = result.choices[0].message.content;
+        } else {
+            aiResponse = "I received the data, but I'm having trouble displaying it. Try asking again!";
+        }
+
+        // જો જવાબમાં તમારો સવાલ ફરીથી આવે, તો તેને કાઢી નાખવો
+        if (aiResponse.includes(message)) {
+            aiResponse = aiResponse.replace(message, "").replace("<s>[INST]", "").replace("[/INST]", "").trim();
+        }
+
         chatbox.innerHTML += `<div class="mb-4 text-blue-400"><b>AI:</b> ${aiResponse}</div>`;
-        chatbox.scrollTop = chatbox.scrollHeight;
+        
     } catch (err) {
-        chatbox.innerHTML += `<div class="mb-4 text-red-400"><b>System:</b> Server Error. Check Vercel Settings.</div>`;
+        chatbox.innerHTML += `<div class="mb-4 text-red-400"><b>System:</b> Connection failed. Please try again.</div>`;
+    } finally {
+        sendBtn.disabled = false;
+        chatbox.scrollTop = chatbox.scrollHeight;
     }
 }
     </script>
 </body>
 </html>
+
 
