@@ -53,13 +53,20 @@
             body: JSON.stringify({ message: message }),
         });
 
-        const result = await response.json();
+       const result = await response.json();
         
         let aiResponse = "";
-        if (result.choices && result.choices[0]) {
-            aiResponse = result.choices[0].message.content;
+        if (Array.isArray(result) && result[0].generated_text) {
+            aiResponse = result[0].generated_text;
+        } else if (result.error) {
+            aiResponse = result.error;
         } else {
-            aiResponse = "AI is warming up, please try again in 10 seconds.";
+            aiResponse = "I am ready now! Please ask your question again.";
+        }
+
+        // વધારાનું લખાણ કાઢવા માટે
+        if (aiResponse.includes(message)) {
+            aiResponse = aiResponse.split(message).pop().trim();
         }
 
         chatbox.innerHTML += `<div class="mb-4 text-blue-400"><b>AI:</b> ${aiResponse}</div>`;
@@ -71,6 +78,7 @@
     </script>
 </body>
 </html>
+
 
 
 
