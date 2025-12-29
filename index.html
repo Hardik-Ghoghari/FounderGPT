@@ -46,27 +46,35 @@ async function sendMessage() {
     input.value = '';
 
     try {
-        const response = await fetch("api/generate", {
+        const response = await fetch("/api/generate", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ message: message }),
         });
 
+        // જો સર્વર કોઈ ભૂલ આપે (404 કે 500)
+        if (!response.ok) {
+            const errorData = await response.json();
+            chatbox.innerHTML += `<div class="mb-4 text-red-400"><b>System Error:</b> Status ${response.status} - ${JSON.stringify(errorData)}</div>`;
+            return;
+        }
+
         const result = await response.json();
         
-        // Hugging Face નો જવાબ આ રીતે આવે છે: [{ generated_text: "..." }]
-        const aiResponse = result[0].generated_text || "No response received.";
-        
+        // Hugging Face નો જવાબ
+        const aiResponse = result[0]?.generated_text || "No response.";
         chatbox.innerHTML += `<div class="mb-4 text-blue-400"><b>AI:</b> ${aiResponse}</div>`;
         chatbox.scrollTop = chatbox.scrollHeight;
+
     } catch (err) {
-        chatbox.innerHTML += `<div class="mb-4 text-red-400"><b>System:</b> Connection failed. Check folder structure.</div>`;
+        chatbox.innerHTML += `<div class="mb-4 text-red-400"><b>System:</b> Connection failed. Check your Vercel Dashboard.</div>`;
     }
 }
     </script>
 </body>
 
 </html>
+
 
 
 
