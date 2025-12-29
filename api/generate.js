@@ -1,14 +1,20 @@
 export default async function handler(req, res) {
   try {
-    const { message } = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    const { message } = body;
 
-    const response = await fetch("https://api-inference.huggingface.co/models/meta-llama/Llama-3.2-3B-Instruct", {
+    // હગિંગ ફેસનું નવું 'Router' સરનામું
+    const response = await fetch("https://router.huggingface.co/hf-chat/v1/chat/completions", {
       headers: {
         "Authorization": `Bearer ${process.env.HF_TOKEN}`,
         "Content-Type": "application/json",
       },
       method: "POST",
-      body: JSON.stringify({ inputs: message }),
+      body: JSON.stringify({
+        model: "meta-llama/Llama-3.2-3B-Instruct",
+        messages: [{ role: "user", content: message }],
+        max_tokens: 800
+      }),
     });
 
     const data = await response.json();
