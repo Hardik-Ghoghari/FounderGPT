@@ -1,29 +1,30 @@
 export default async function handler(req, res) {
-    // માત્ર POST રિક્વેસ્ટ જ લેવી
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: "Method not allowed" });
+  try {
+    const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    const { message } = body;
+
+    // આપણે હવે Mistral વાપરીશું જે વધુ ઝડપી છે
+    const response = await fetch("https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.3", {
+      headers: {
+        "Authorization": `Bearer ${process.env.HF_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+      body: JSON.stringify({ 
+        inputs: message,
+        parameters: { max_new_tokens: 500 }
+      }),
+    });
+
+    const data = await response.json();
+
+    // જો હજુ પણ સર્વર લોડ થતું હોય તો
+    if (response.status === 503) {
+      return res.status(503).json({ error: "AI is waking up... Try one last time in 10 seconds." });
     }
 
-    try {
-        const { message } = req.body;
-
-        // Hugging Face ના નવા Router નો ઉપયોગ
-        const response = await fetch("https://router.huggingface.co/hf-chat/v1/chat/completions", {
-            headers: {
-                "Authorization": `Bearer ${process.env.HF_TOKEN}`,
-                "Content-Type": "application/json",
-            },
-            method: "POST",
-            body: JSON.stringify({
-                model: "meta-llama/Llama-3.2-3B-Instruct",
-                messages: [{ role: "user", content: message }],
-                max_tokens: 500
-            }),
-        });
-
-        const data = await response.json();
-        return res.status(200).json(data);
-    } catch (error) {
-        return res.status(500).json({ error: error.message });
-    }
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
 }
