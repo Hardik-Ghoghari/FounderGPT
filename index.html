@@ -53,20 +53,17 @@
             body: JSON.stringify({ message: message }),
         });
 
-       const result = await response.json();
+  const result = await response.json();
         
         let aiResponse = "";
-        if (Array.isArray(result) && result[0].generated_text) {
-            aiResponse = result[0].generated_text;
-        } else if (result.error) {
-            aiResponse = result.error;
-        } else {
-            aiResponse = "I am ready now! Please ask your question again.";
-        }
 
-        // વધારાનું લખાણ કાઢવા માટે
-        if (aiResponse.includes(message)) {
-            aiResponse = aiResponse.split(message).pop().trim();
+        // નવા Router ફોર્મેટ મુજબ જવાબ વાંચવો (result.choices[0].message.content)
+        if (result.choices && result.choices[0] && result.choices[0].message) {
+            aiResponse = result.choices[0].message.content;
+        } else if (result.error) {
+            aiResponse = "Error: " + (result.error.message || JSON.stringify(result.error));
+        } else {
+            aiResponse = "I am awake now! Please ask your business question again.";
         }
 
         chatbox.innerHTML += `<div class="mb-4 text-blue-400"><b>AI:</b> ${aiResponse}</div>`;
@@ -78,6 +75,7 @@
     </script>
 </body>
 </html>
+
 
 
 
