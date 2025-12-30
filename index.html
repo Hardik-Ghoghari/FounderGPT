@@ -32,14 +32,17 @@
     </div>
 
     <script>
-       async function sendMessage() {
+async function sendMessage() {
     const input = document.getElementById('userInput');
     const chatbox = document.getElementById('chatbox');
+    const sendBtn = document.getElementById('sendBtn');
     const msg = input.value.trim();
     if (!msg) return;
 
+    sendBtn.disabled = true;
     chatbox.innerHTML += `<div class="mb-4 text-right"><b>You:</b> ${msg}</div>`;
     input.value = '';
+    chatbox.scrollTop = chatbox.scrollHeight;
 
     try {
         const response = await fetch("/api/generate", {
@@ -49,21 +52,34 @@
         });
 
         const result = await response.json();
-        
         let aiRes = "";
-        if (result.choices && result.choices[0]) {
+
+        // ૧. જો જવાબ OpenAI સ્ટાઇલમાં હોય (choices)
+        if (result.choices && result.choices[0] && result.choices[0].message) {
             aiRes = result.choices[0].message.content;
-        } else {
-            aiRes = "AI is thinking... please try again in 10 seconds.";
+        } 
+        // ૨. જો જવાબ હગિંગ ફેસ સ્ટાઇલમાં હોય (array)
+        else if (Array.isArray(result) && result[0].generated_text) {
+            aiRes = result[0].generated_text;
+        }
+        // ૩. જો કોઈ એરર હોય
+        else if (result.error) {
+            aiRes = "AI Error: " + (result.error.message || JSON.stringify(result.error));
+        }
+        else {
+            aiRes = "I received the data, please try asking again in a moment.";
         }
 
         chatbox.innerHTML += `<div class="mb-4 text-blue-400"><b>AI:</b> ${aiRes}</div>`;
     } catch (err) {
-        chatbox.innerHTML += `<div class="mb-4 text-red-400"><b>System:</b> Backend Error. Check Vercel Settings.</div>`;
+        chatbox.innerHTML += `<div class="mb-4 text-red-400"><b>System:</b> Backend Connection Error.</div>`;
+    } finally {
+        sendBtn.disabled = false;
+        chatbox.scrollTop = chatbox.scrollHeight;
     }
-    chatbox.scrollTop = chatbox.scrollHeight;
 }
     </script>
 </body>
 </html>
+
 
